@@ -1,0 +1,51 @@
+---
+- hosts: ubuntu
+  become: yes
+  tasks: 
+  - name: install git
+    package:
+      update_cache: yes
+      name: git
+      state: present
+  - name: install java
+    Package:
+      update_cache: yes
+      name: default-jdk
+      state: present
+  - name: install maven
+    package:
+      update_cache: yes
+      name: maven
+      state: present 
+  - name: install tomcat8
+    package:
+      update_cache: yes
+      name: tomcat8
+      state: present
+  - name: coyy the files
+    get_url:
+      url:
+      dest: /etc/default/tomcat8
+    notify:
+    - restart the service
+  - name: install additional packages
+    apt: 
+      name: "{{ item }}"
+      state: present
+      loop:    
+      - tomcat8-docs
+      - tomcat8-admin 
+      - tomcat8-examples
+    notify:
+    - restart the service
+  handlers:
+  - name: restart the service
+    service:
+      name: tomcat8
+      state: restarted
+    
+  
+
+
+
+      

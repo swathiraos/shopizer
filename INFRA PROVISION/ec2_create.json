@@ -1,0 +1,149 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "ec2 instance creation",
+    "Resources": {
+        "ntier": {
+            "Type": "AWS::EC2::VPC",
+            "Properties": {
+                "CidrBlock": "192.168.0.0/16",
+                "EnableDnsHostnames": true,
+                "InstanceTenancy": "default",
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "ntier"
+                    }
+                ]
+            }
+        },
+        "myigw": {
+            "Type": "AWS::EC2::InternetGateway",
+            "Properties": {
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "myigw"
+                    }
+                ]
+            }
+        },
+        "AttachIGW": {
+            "Type": "AWS::EC2::VPCGatewayAttachment",
+            "Properties": {
+                "InternetGatewayId": {
+                    "Ref": "myigw"
+                },
+                "VpcId": {
+                    "Ref": "ntier"
+                }
+            }
+        },
+        "createRouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "myrutetable"
+                    }
+                ],
+                "VpcId": {
+                    "Ref": "ntier"
+                }
+            }
+        },
+        "routeIGW": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "GatewayId": {
+                    "Ref": "myigw"
+                },
+                "RouteTableId": {
+                    "Ref": "createRouteTable"
+                }
+            }
+        },
+        "associateroutetabletosubnet": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "createRouteTable"
+                },
+                "SubnetId": {
+                    "Ref": "Websubnet"
+                }
+            }
+        },
+        "Websubnet": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "CidrBlock": "192.168.0.0/24",
+                "MapPublicIpOnLaunch": true,
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "websunet"
+                    }
+                ],
+                "VpcId": {
+                    "Ref": "ntier"
+                }
+            }
+        },
+        "MYSG": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "creating SG",
+                "VpcId": {
+                    "Ref": "ntier"
+                },
+                "GroupName": "ALLPORTSOPEN",
+                "SecurityGroupEgress": [
+                    {
+                        "IpProtocol": "-1",
+                        "FromPort": 0,
+                        "ToPort": 0,
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ],
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "-1",
+                        "FromPort": 0,
+                        "ToPort": 0,
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "MYSG"
+                    }
+                ]
+            }
+        },
+        "MYEC2": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "ImageId": "ami-0b37e9efc396e4c38",
+                "InstanceType": "t2.medium",
+                "KeyName": "ansible",
+                "SubnetId": {
+                    "Ref": "Websubnet"
+                },
+                "SecurityGroupIds": [
+                    {
+                        "Ref": "MYSG"
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "MYEC2"
+                    }
+                ]
+            }
+        }
+    }
+}
